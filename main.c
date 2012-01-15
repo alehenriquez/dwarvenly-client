@@ -70,7 +70,7 @@ int main() {
     };
 
     DEBUG_GL
-    graphics_t g = mk_graphics(&pr1, model_mat1, verts, 8, testi, 9);
+    graphics_t g = mk_graphics(&pr1, model_mat1, verts, 8, testi, 36);
     DEBUG_GL
 
     double curr = glfwGetTime();
