@@ -30,6 +30,7 @@ int main() {
                               0.0,  0.0,   0.0,
                               0.0,  1.0,   0.0);
     win_open(0, 0, 8, 8, 8, 0, 24, 8, 1);
+    glClearColor(0.8, 0.8, 0.8, 1.0);
     DEBUG_GL
     GLuint sh1 = mk_shader("shaders/default.vert");
     DEBUG_GL
@@ -47,7 +48,7 @@ int main() {
         verts[x].z = (x & 4)+0.0;
         verts[x].nx = 0.0;
         verts[x].ny = 0.0;
-        verts[x].nz = -1.0;
+        verts[x].nz = 1.0;
     }
 
     unsigned short testi[] = {0, 1, 2,
@@ -84,9 +85,8 @@ int main() {
     DEBUG_GL
 
     glEnable(GL_DEPTH_TEST);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
     glEnable(GL_CULL_FACE);
-    glClearColor(0.8, 0.8, 0.8, 1.0);
 
     while(running) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -103,6 +103,10 @@ int main() {
 
         nextpolation = (phys_accum / phys_step);
         prevpolation = 1 - nextpolation;
+
+        rotate(model_mat1, 10.0, x_axis);
+        rotate(model_mat1, 5.0, y_axis);
+        rotate(model_mat1, 3.0, z_axis);
 
         glUniformMatrix4fv(pr1.view_matrix, 1, GL_TRUE, cam_matrix);
         draw_graphics(g);
