@@ -38,15 +38,7 @@ int main() {
     program_t pr1 = mk_program(sh1, sh2, 0);
     DEBUG_GL
     use_program(pr1);
-
-    float test[] = {0.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0,
-                    0.0, 1.0, 0.0,
-                    0.0, 1.0, 1.0,
-                    1.0, 0.0, 0.0,
-                    1.0, 0.0, 1.0,
-                    1.0, 1.0, 0.0,
-                    1.0, 1.0, 1.0 };
+    DEBUG_GL
 
     vertex_t *verts = malloc(8 * sizeof(vertex_t));
     for (unsigned int x = 0; x < 8; x++) {
@@ -59,14 +51,24 @@ int main() {
     }
 
     unsigned short testi[] = {0, 1, 2,
-                              0, 2, 3,
-                              0, 3, 4 };
+                              1, 3, 2,
+                              1, 5, 3,
+                              5, 7, 3,
+                              5, 4, 7,
+                              4, 6, 7,
+                              4, 0, 6,
+                              0, 2, 6,
+                              2, 3, 6,
+                              3, 7, 6,
+                              0, 4, 1,
+                              4, 5, 1 };
     float model_mat1[] = {
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     };
+
     DEBUG_GL
     graphics_t g = mk_graphics(&pr1, model_mat1, verts, 8, testi, 9);
     DEBUG_GL
