@@ -25,12 +25,11 @@ static int running = 1;
 
 
 int main() {
-    persp_to_matrix(persp_matrix, 60.0, 1.0, 0.1, 100.0);
-    cam_to_matrix(cam_matrix, 0.0,  5.0,  -5.0,
+    cam_to_matrix(cam_matrix, 0.0,  2.0,  -2.0,
                               0.0,  0.0,   0.0,
                               0.0,  1.0,   0.0);
     win_open(0, 0, 8, 8, 8, 0, 24, 8, 1);
-    glClearColor(0.8, 0.8, 0.8, 1.0);
+    glClearColor(0.8, 0.1, 0.8, 1.0);
     DEBUG_GL
     GLuint sh1 = mk_shader("shaders/default.vert");
     DEBUG_GL
@@ -43,12 +42,12 @@ int main() {
 
     vertex_t *verts = malloc(8 * sizeof(vertex_t));
     for (unsigned int x = 0; x < 8; x++) {
-        verts[x].x = (x & 1)+0.0;
-        verts[x].y = (x & 2)+0.0;
-        verts[x].z = (x & 4)+0.0;
-        verts[x].nx = 0.0;
-        verts[x].ny = 0.0;
-        verts[x].nz = 1.0;
+        verts[x].x = (x & 1)-0.5;
+        verts[x].y = (x & 2)-0.5;
+        verts[x].z = (x & 4)+2.0;
+//        verts[x].nx = 0.0;
+//        verts[x].ny = 0.0;
+//        verts[x].nz = 1.0;
     }
 
     unsigned short testi[] = {0, 1, 2,
@@ -86,7 +85,7 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 
     while(running) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -104,9 +103,9 @@ int main() {
         nextpolation = (phys_accum / phys_step);
         prevpolation = 1 - nextpolation;
 
-        rotate(model_mat1, 10.0, x_axis);
-        rotate(model_mat1, 5.0, y_axis);
-        rotate(model_mat1, 3.0, z_axis);
+        rotate(model_mat1, 1.0, x_axis);
+        rotate(model_mat1, 0.5, y_axis);
+        rotate(model_mat1, 0.3, z_axis);
 
         glUniformMatrix4fv(pr1.view_matrix, 1, GL_TRUE, cam_matrix);
         draw_graphics(g);

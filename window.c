@@ -4,6 +4,10 @@
 #include "window.h"
 #endif
 
+#ifndef GRAPHICS_H
+#include "graphics.h"
+#endif
+
 static int w_width = 1;
 static int w_height = 1;
 static int w_initialized = 0;
@@ -13,7 +17,7 @@ void GLFWCALL win_on_resize(int width, int height) {
 	if (height < 1) { height = 1; }
     w_width = width;
     w_height = height;
-    //persp.aspect = (float)width / (float)height;
+    persp_to_matrix(persp_matrix, 60.0, (float)width / (float)height, 1.0, 100.0);
 	return;
 }
 

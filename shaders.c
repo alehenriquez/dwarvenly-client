@@ -279,12 +279,12 @@ program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint 
     DEBUG_GL
     glVertexAttribPointer(p.v_position, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(0)); // DEPENDENCY: graphics.h vertex_t layout
     DEBUG_GL
-    p.v_normal = glGetAttribLocation(p.program_id, "v_normal");
-    DEBUG_GL
-    glEnableVertexAttribArray(p.v_normal);
-    DEBUG_GL
-    glVertexAttribPointer(p.v_normal, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(12)); // DEPENDENCY: graphics.h vertex_t layout
-    DEBUG_GL
+    //p.v_normal = glGetAttribLocation(p.program_id, "v_normal");
+    //DEBUG_GL
+    //glEnableVertexAttribArray(p.v_normal);
+    //DEBUG_GL
+    //glVertexAttribPointer(p.v_normal, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), BUFFER_OFFSET(12)); // DEPENDENCY: graphics.h vertex_t layout
+    //DEBUG_GL
     p.proj_matrix = glGetUniformLocation(p.program_id, "proj_matrix");
     DEBUG_GL
     glUniformMatrix4fv(p.proj_matrix, 1, GL_TRUE, persp_matrix);

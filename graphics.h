@@ -11,16 +11,16 @@ typedef struct vertex {
     float x;
     float y;
     float z;
-    float nx;
-    float ny;
-    float nz;
-    float s0;
-    float t0;
-    float s1;
-    float t1;
-    float s2;
-    float t2;
-    float extra[4];
+//    float nx;
+//    float ny;
+//    float nz;
+//    float s0;
+//    float t0;
+//    float s1;
+//    float t1;
+//    float s2;
+//    float t2;
+//    float extra[4];
 } vertex_t;
 
 typedef struct graphics {
