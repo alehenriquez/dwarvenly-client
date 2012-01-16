@@ -13,6 +13,7 @@ void GLFWCALL win_on_resize(int width, int height) {
 	if (height < 1) { height = 1; }
     w_width = width;
     w_height = height;
+    glViewport(0, 0, width, height);
 	return;
 }
 
@@ -36,8 +37,6 @@ void win_open(int width, int height, int r_bits, int g_bits, int b_bits, int alp
         return;
     }
 
-    glfwSetWindowSizeCallback( &win_on_resize );
-
     if (gl3wInit() != 0) {
         fprintf(stderr, "gl3wInit() failed");
         return;
@@ -47,6 +46,8 @@ void win_open(int width, int height, int r_bits, int g_bits, int b_bits, int alp
         fprintf(stderr, "OpenGL 3.3 not supported on this device");
         return;
     }
+
+    glfwSetWindowSizeCallback( &win_on_resize );
 
     return;
 }

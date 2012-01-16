@@ -87,4 +87,4 @@ void rotate(GLfloat *m, GLfloat angle, axis ax);
 graphics_t mk_graphics(program_t *p, float *model_mat, vertex_t *vertices, unsigned short vertices_len, unsigned short *indices, unsigned int indices_len);
 void bind_graphics(graphics_t g);
 void rm_graphics(graphics_t g);
-void draw_graphics(program_t p, graphics_t g);
+void draw_graphics(graphics_t g);

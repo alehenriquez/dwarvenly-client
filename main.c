@@ -28,10 +28,10 @@ int main() {
 
     win_open(0, 0, 8, 8, 8, 0, 24, 8, 1);
     persp_to_matrix(persp_matrix, 60.0, (float)w_width / (float)w_height, 1.0, 10.0);
-    cam_to_matrix(cam_matrix, 0.0,  5.0,  -5.0,
+    cam_to_matrix(cam_matrix, 0.0,  5.0,  -20.0,
                               0.0,  0.0,   1.0,
                               0.0,  1.0,   0.0);
-    glClearColor(0.9, 0.9, 0.9, 1.0);
+    glClearColor(0.2, 0.75, 0.1, 1.0);
     DEBUG_GL
     GLuint sh1 = mk_shader("shaders/default.vert");
     DEBUG_GL
@@ -43,12 +43,12 @@ int main() {
     DEBUG_GL
 
     vertex_t *verts = malloc(8 * sizeof(vertex_t));
-    verts[0].x = -1.0; verts[0].y = -1.0; verts[0].z = 2.0;
-    verts[1].x =  1.0; verts[1].y = -1.0; verts[1].z = 2.0;
+    verts[0].x = -1.0; verts[0].y = 0.0; verts[0].z = 2.0;
+    verts[1].x =  1.0; verts[1].y = 0.0; verts[1].z = 2.0;
     verts[2].x = -1.0; verts[2].y =  1.0; verts[2].z = 2.0;
     verts[3].x =  1.0; verts[3].y =  1.0; verts[3].z = 2.0;
-    verts[4].x = -1.0; verts[4].y = -1.0; verts[4].z = 3.0;
-    verts[5].x =  1.0; verts[5].y = -1.0; verts[5].z = 3.0;
+    verts[4].x = -1.0; verts[4].y = 0.0; verts[4].z = 3.0;
+    verts[5].x =  1.0; verts[5].y = 0.0; verts[5].z = 3.0;
     verts[6].x = -1.0; verts[6].y =  1.0; verts[6].z = 3.0;
     verts[7].x =  1.0; verts[7].y =  1.0; verts[7].z = 3.0;
 
@@ -95,7 +95,7 @@ int main() {
     DEBUG_GL
 
     glEnable(GL_DEPTH_TEST);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
     //glEnable(GL_CULL_FACE);
 
     printf("\nmodel matrix\n");
@@ -124,9 +124,8 @@ int main() {
         //rotate(model_mat1, 1.0, x_axis);
         //rotate(model_mat1, 0.5, y_axis);
         //rotate(model_mat1, 0.3, z_axis);
-        //rotate(model_mat1, 0.3, z_axis);
 
-        draw_graphics(pr1, g);
+        draw_graphics(g);
 
         glfwSwapBuffers();
         DEBUG_GL

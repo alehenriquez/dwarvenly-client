@@ -202,10 +202,10 @@ void rm_graphics(graphics_t g) {
     return;
 }
 
-void draw_graphics(program_t p, graphics_t g) {
+void draw_graphics(graphics_t g) {
     bind_graphics(g);
-    glUniformMatrix4fv(g.model_matrix_loc, 1, GL_TRUE, g.model_matrix);
-    glUniformMatrix4fv(p.view_matrix, 1, GL_FALSE, cam_matrix);
-    glUniformMatrix4fv(p.proj_matrix, 1, GL_TRUE, persp_matrix);
+    glUniformMatrix4fv(g.model_matrix_loc, 1, GL_FALSE, g.model_matrix);
+    glUniformMatrix4fv(g.program->view_matrix, 1, GL_FALSE, cam_matrix);
+    glUniformMatrix4fv(g.program->proj_matrix, 1, GL_FALSE, persp_matrix);
     glDrawElements(GL_TRIANGLES, sizeof(unsigned short)*g.indices_len, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 }
