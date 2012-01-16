@@ -1,8 +1,5 @@
 #version 330
 
-in vec3 position;
-in mat4 view_model;
-
 out vec4 frag_color;
 
 void main () {

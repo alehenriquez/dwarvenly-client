@@ -23,12 +23,20 @@ typedef struct vertex {
 //    float extra[4];
 } vertex_t;
 
+typedef struct transformation {
+    float *proj_matrix;
+    float *model_matrix;
+    float *view_matrix;
+} transformation_t;
+
 typedef struct graphics {
     // GPU side data
 	GLuint vbo_id;
 	GLuint ibo_id;
 	GLuint vao_id;
     GLuint model_matrix_loc;
+    GLuint ubo_id;
+    GLuint ubo_loc;
 
     // CPU side data
     unsigned short vertices_len;
@@ -38,7 +46,7 @@ typedef struct graphics {
 	unsigned short *indices;
 
     float *model_matrix;
-
+    transformation_t trans;
     program_t *program;
 } graphics_t;
 
@@ -68,7 +76,6 @@ typedef enum {
     z_axis
 } axis;
 
-
 static float persp_matrix[16] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 static float cam_matrix[16] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
@@ -80,4 +87,4 @@ void rotate(GLfloat *m, GLfloat angle, axis ax);
 graphics_t mk_graphics(program_t *p, float *model_mat, vertex_t *vertices, unsigned short vertices_len, unsigned short *indices, unsigned int indices_len);
 void bind_graphics(graphics_t g);
 void rm_graphics(graphics_t g);
-void draw_graphics(graphics_t g);
+void draw_graphics(program_t p, graphics_t g);

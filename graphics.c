@@ -36,48 +36,50 @@ void cross(float *r, float x1, float y1, float z1, float x2, float y2, float z2)
     r[2] = x1*y2 - x2*y1;
 }
 
-void cam_to_matrix(float *m, float x, float y, float z, float fx, float fy, float fz, float ux, float uy, float uz) {
-    memset(m, 0, sizeof(GLfloat) * 16);
+void cam_to_matrix(float *r, float x, float y, float z, float cx, float cy, float cz, float ux, float uy, float uz) {
+    memset(r, 0.0, sizeof(GLfloat) * 16);
 
     // calculating the viewing vector
-    float v[3] = {fx-x, fy-y, fz-z};
+    float fwd[3] = {cx-x, cy-y, cz-z};
 
-    float vmag = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-    float umag = sqrt(ux*ux + uy*uy + uz*uz);
+    float fwd_mag = sqrt(fwd[0]*fwd[0] + fwd[1]*fwd[1] + fwd[2]*fwd[2]);
+    float up_mag = sqrt(ux*ux + uy*uy + uz*uz);
 
     // normalizing the viewing vector
-    if( vmag != 0) {
-        v[0] = v[0]/vmag;
-        v[1] = v[1]/vmag;
-        v[2] = v[2]/vmag;
+    if( fwd_mag != 1) {
+        fwd[0] = fwd[0]/fwd_mag;
+        fwd[1] = fwd[1]/fwd_mag;
+        fwd[2] = fwd[2]/fwd_mag;
     }
 
     // normalising the up vector.
-    if( umag != 0 ) {
-        ux = ux/umag;
-        uy = uy/umag;
-        uz = uz/umag;
+    if( up_mag != 1 ) {
+        ux = ux/up_mag;
+        uy = uy/up_mag;
+        uz = uz/up_mag;
     }
 
-    float s[3], u[3];
+    float side[3], up[3];
 
-    cross(s, v[0], v[1], v[2], ux, uy, uz);
-    cross(u, s[0], s[1], s[2], v[0], v[1], v[2]);
+    cross(side, fwd[0], fwd[1], fwd[2], ux, uy, uz);
+    cross(up, side[0], side[1], side[2], fwd[0], fwd[1], fwd[2]);
 
 
-    m[0] = s[0];
-    m[1] = u[0];
-    m[2] =-v[0];
+    r[0] = side[0];
+    r[4] = side[1];
+    r[8] = side[2];
 
-    m[4] = s[1];
-    m[5] = u[1];
-    m[6] =-v[1];
+    r[1] = up[0];
+    r[5] = up[1];
+    r[9] = up[2];
 
-    m[8] = s[2];
-    m[9] = u[2];
-    m[10]=-v[2];
+    r[2] =-fwd[0];
+    r[6] =-fwd[1];
+    r[10]=-fwd[2];
 
-    m[15]= 1;
+    r[15]=1.0;
+
+    translate(r, -x, -y, -z);
 }
 
 void imul_matrix(GLfloat *m1, GLfloat *m2) {
@@ -157,7 +159,27 @@ graphics_t mk_graphics(program_t *p, float *model_mat,
     DEBUG_GL
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g.ibo_id);
     DEBUG_GL
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*indices_len, indices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*indices_len, indices, GL_STATIC_DRAW);
+    DEBUG_GL
+
+    // Setup UBO
+    transformation_t t;
+    t.proj_matrix = persp_matrix;
+    t.view_matrix = cam_matrix;
+    t.model_matrix = model_mat;
+    g.trans = t;
+
+    glGenBuffers(1, &g.ubo_id);
+    DEBUG_GL
+    glBindBuffer(GL_UNIFORM_BUFFER, g.ubo_id);
+    DEBUG_GL
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(transformation_t), &g.trans, GL_STATIC_DRAW);
+    DEBUG_GL
+    g.ubo_loc = glGetUniformBlockIndex(p->program_id, "Transformation");
+    DEBUG_GL
+    glUniformBlockBinding(p->program_id, g.ubo_loc, 1); // 0 here must be set by the programmer
+    DEBUG_GL
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, g.ubo_id); // This is the same 0
     DEBUG_GL
 
     g.model_matrix_loc = glGetUniformLocation(p->program_id, "model_matrix");
@@ -167,8 +189,10 @@ graphics_t mk_graphics(program_t *p, float *model_mat,
 }
 
 void bind_graphics(graphics_t g) {
+    glUseProgram(g.program->program_id);
     glBindBuffer(GL_ARRAY_BUFFER, g.vbo_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g.ibo_id);
+    glBindVertexArray(g.vao_id);
     return;
 }
 
@@ -178,8 +202,10 @@ void rm_graphics(graphics_t g) {
     return;
 }
 
-void draw_graphics(graphics_t g) {
-    glBindVertexArray(g.vao_id);
+void draw_graphics(program_t p, graphics_t g) {
+    bind_graphics(g);
     glUniformMatrix4fv(g.model_matrix_loc, 1, GL_TRUE, g.model_matrix);
+    glUniformMatrix4fv(p.view_matrix, 1, GL_FALSE, cam_matrix);
+    glUniformMatrix4fv(p.proj_matrix, 1, GL_TRUE, persp_matrix);
     glDrawElements(GL_TRIANGLES, sizeof(unsigned short)*g.indices_len, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 }

@@ -12,3 +12,4 @@
 #endif
 
 int check_gl_errors();
+void print_matrix(float *);

@@ -25,11 +25,13 @@ static int running = 1;
 
 
 int main() {
-    cam_to_matrix(cam_matrix, 0.0,  2.0,  -2.0,
-                              0.0,  0.0,   0.0,
-                              0.0,  1.0,   0.0);
+
     win_open(0, 0, 8, 8, 8, 0, 24, 8, 1);
-    glClearColor(0.8, 0.1, 0.8, 1.0);
+    persp_to_matrix(persp_matrix, 60.0, (float)w_width / (float)w_height, 1.0, 10.0);
+    cam_to_matrix(cam_matrix, 0.0,  5.0,  -5.0,
+                              0.0,  0.0,   1.0,
+                              0.0,  1.0,   0.0);
+    glClearColor(0.9, 0.9, 0.9, 1.0);
     DEBUG_GL
     GLuint sh1 = mk_shader("shaders/default.vert");
     DEBUG_GL
@@ -41,14 +43,23 @@ int main() {
     DEBUG_GL
 
     vertex_t *verts = malloc(8 * sizeof(vertex_t));
-    for (unsigned int x = 0; x < 8; x++) {
-        verts[x].x = (x & 1)-0.5;
-        verts[x].y = (x & 2)-0.5;
-        verts[x].z = (x & 4)+2.0;
+    verts[0].x = -1.0; verts[0].y = -1.0; verts[0].z = 2.0;
+    verts[1].x =  1.0; verts[1].y = -1.0; verts[1].z = 2.0;
+    verts[2].x = -1.0; verts[2].y =  1.0; verts[2].z = 2.0;
+    verts[3].x =  1.0; verts[3].y =  1.0; verts[3].z = 2.0;
+    verts[4].x = -1.0; verts[4].y = -1.0; verts[4].z = 3.0;
+    verts[5].x =  1.0; verts[5].y = -1.0; verts[5].z = 3.0;
+    verts[6].x = -1.0; verts[6].y =  1.0; verts[6].z = 3.0;
+    verts[7].x =  1.0; verts[7].y =  1.0; verts[7].z = 3.0;
+
+    /*for (unsigned int x = 0; x < 8; x++) {
+        verts[x].x = (x & 0x1)-0.5;
+        verts[x].y = (x & 0x2)-0.5;
+        verts[x].z = (x & 0x4)+2.0;
 //        verts[x].nx = 0.0;
 //        verts[x].ny = 0.0;
 //        verts[x].nz = 1.0;
-    }
+    }*/
 
     unsigned short testi[] = {0, 1, 2,
                               1, 3, 2,
@@ -84,8 +95,15 @@ int main() {
     DEBUG_GL
 
     glEnable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
     //glEnable(GL_CULL_FACE);
+
+    printf("\nmodel matrix\n");
+    print_matrix(model_mat1);
+    printf("\npersp matrix\n");
+    print_matrix(persp_matrix);
+    printf("\ncamera matrix\n");
+    print_matrix(cam_matrix);
 
     while(running) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -103,35 +121,12 @@ int main() {
         nextpolation = (phys_accum / phys_step);
         prevpolation = 1 - nextpolation;
 
-        rotate(model_mat1, 1.0, x_axis);
-        rotate(model_mat1, 0.5, y_axis);
-        rotate(model_mat1, 0.3, z_axis);
+        //rotate(model_mat1, 1.0, x_axis);
+        //rotate(model_mat1, 0.5, y_axis);
+        //rotate(model_mat1, 0.3, z_axis);
+        //rotate(model_mat1, 0.3, z_axis);
 
-        glUniformMatrix4fv(pr1.view_matrix, 1, GL_TRUE, cam_matrix);
-        draw_graphics(g);
-        /* glLoadIdentity(); */
-        /*
-		gluLookAt(cam.x*nextpolation + cam.x_prev*prevpolation,
-                  cam.y*nextpolation + cam.y_prev*prevpolation,
-                  cam.x*nextpolation + cam.z_prev*prevpolation,
-                  cam.fx*nextpolation + cam.fx_prev*prevpolation,
-                  cam.fy*nextpolation + cam.fy_prev*prevpolation,
-                  cam.fz*nextpolation + cam.fz_prev*prevpolation,
-                  cam.ux,
-                  cam.uy,
-                  cam.uz);
-		*/
-
-        /* NORMAL shit with a PERSPECTIVE projection */
-
-        /* UI shit with an ORTHO projection */
-        /*
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, w_width, 0, w_height, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        */
+        draw_graphics(pr1, g);
 
         glfwSwapBuffers();
         DEBUG_GL
