@@ -1,6 +1,7 @@
 #define UTILS_H
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #undef DEBUG
 #define DEBUG 1

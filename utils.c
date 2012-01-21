@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <GL3/gl3w.h>
 
 #ifndef UTILS_H

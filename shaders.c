@@ -185,8 +185,9 @@ void rm_shader(GLuint shader_id) {
     return;
 }
 
-program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id) {
+program_t mk_program(camera_t *c, GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id) {
 	program_t p;
+	p.is_compiled = 0;
 	p.program_id = 0;
 
 	// Make sure we have at least one shader
@@ -211,63 +212,9 @@ program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint 
         glAttachShader(p.program_id, geometry_shader_id);
     }
 
-	glLinkProgram(p.program_id);
+    compile_program(&p);
 
-	// Check for linking success
-	GLint success = GL_FALSE;
-	glGetProgramiv(p.program_id, GL_LINK_STATUS, &success);
-	if (success != GL_TRUE) {
-		// Get info log length
-		GLint log_len = 0;
-		glGetProgramiv(p.program_id, GL_INFO_LOG_LENGTH, &log_len);
-		if (log_len < 1) {
-			fprintf(stderr, "Linking program %u failed. Additionally, fetching info log for the program failed.", p.program_id);
-			p.program_id = 0;
-			return p;
-		}
-
-		// Return info log as error
-		GLchar *log = malloc(sizeof(GLchar)*log_len);
-		if (log == NULL) {
-			fprintf(stderr, "Linking program %u failed. Additionally, fetching memory for the info log also failed.", p.program_id);
-			p.program_id = 0;
-			return p;
-		}
-		glGetProgramInfoLog(p.program_id, log_len, NULL, log);
-		fprintf(stderr, "Linking program %u failed. Info: %s", p.program_id, log);
-		free(log);
-		p.program_id = 0;
-        return p;
-	}
-
-	// Validate program works
-	success = GL_FALSE;
-	glValidateProgram(p.program_id);
-	glGetProgramiv(p.program_id, GL_VALIDATE_STATUS, &success);
-	if (success != GL_TRUE) {
-        // Get info log length
-        GLint log_len = 0;
-        glGetProgramiv(p.program_id, GL_INFO_LOG_LENGTH, &log_len);
-        if (log_len < 1) {
-            fprintf(stderr, "Validating program %u failed. Additionally, fetching info log for the program failed.", p.program_id);
-            p.program_id = 0;
-			return p;
-        }
-
-        // Return info log as error
-        GLchar *log = malloc(sizeof(GLchar)*log_len);
-        if (log == NULL) {
-            fprintf(stderr, "Validating program %u failed. Additionally, fetching memory for the info log also failed.", p.program_id);
-            p.program_id = 0;
-			return p;
-        }
-        glGetProgramInfoLog(p.program_id, log_len, NULL, log);
-        fprintf(stderr, "Validating program %u failed. Info: %s", p.program_id, log);
-        free(log);
-        p.program_id = 0;
-        return p;
-	}
-
+/*
     // \o/
     // Setup graphics integration
     DEBUG_GL
@@ -287,19 +234,118 @@ program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint 
     //DEBUG_GL
     p.proj_matrix = glGetUniformLocation(p.program_id, "proj_matrix");
     DEBUG_GL
-    glUniformMatrix4fv(p.proj_matrix, 1, GL_TRUE, persp_matrix);
+    //glUniformMatrix4fv(p.proj_matrix, 1, GL_TRUE, c->persp_matrix);
     DEBUG_GL
     p.view_matrix = glGetUniformLocation(p.program_id, "view_matrix");
     DEBUG_GL
+    //glUniformMatrix4fv(p.view_matrix, 1, GL_TRUE, c->cam_matrix);
+*/
+
 	return p;
 }
 
-void rm_program(program_t p) {
-    glDeleteProgram(p.program_id);
+void rm_program(program_t *p) {
+    glDeleteProgram(p->program_id);
     return;
 }
 
-void use_program(program_t p) {
-	glUseProgram(p.program_id);
+void compile_program(program_t *p) {
+    p->is_compiled = 0;
+    glLinkProgram(p->program_id);
+
+    // Check for linking success
+    GLint success = GL_FALSE;
+    glGetProgramiv(p->program_id, GL_LINK_STATUS, &success);
+    if (success != GL_TRUE) {
+        // Get info log length
+        GLint log_len = 0;
+        glGetProgramiv(p->program_id, GL_INFO_LOG_LENGTH, &log_len);
+        if (log_len < 1) {
+            fprintf(stderr, "Linking program %u failed. Additionally, fetching info log for the program failed.", p->program_id);
+            p->program_id = 0;
+            return;
+        }
+
+        // Return info log as error
+        GLchar *log = malloc(sizeof(GLchar)*log_len);
+        if (log == NULL) {
+            fprintf(stderr, "Linking program %u failed. Additionally, fetching memory for the info log also failed.", p->program_id);
+            p->program_id = 0;
+            return;
+        }
+        glGetProgramInfoLog(p->program_id, log_len, NULL, log);
+        fprintf(stderr, "Linking program %u failed. Info: %s", p->program_id, log);
+        free(log);
+        p->program_id = 0;
+        return;
+    }
+
+    // Validate program works
+    success = GL_FALSE;
+    glValidateProgram(p->program_id);
+    glGetProgramiv(p->program_id, GL_VALIDATE_STATUS, &success);
+    if (success != GL_TRUE) {
+        // Get info log length
+        GLint log_len = 0;
+        glGetProgramiv(p->program_id, GL_INFO_LOG_LENGTH, &log_len);
+        if (log_len < 1) {
+            fprintf(stderr, "Validating program %u failed. Additionally, fetching info log for the program failed.", p->program_id);
+            p->program_id = 0;
+            return;
+        }
+
+        // Return info log as error
+        GLchar *log = malloc(sizeof(GLchar)*log_len);
+        if (log == NULL) {
+            fprintf(stderr, "Validating program %u failed. Additionally, fetching memory for the info log also failed.", p->program_id);
+            p->program_id = 0;
+            return;
+        }
+        glGetProgramInfoLog(p->program_id, log_len, NULL, log);
+        fprintf(stderr, "Validating program %u failed. Info: %s", p->program_id, log);
+        free(log);
+        p->program_id = 0;
+        return;
+    }
+
+    p->is_compiled = 1;
+
+    // Set up program attribs
+    attribs_t a;
+    a.v_position = glGetAttribLocation(p->program_id, "v_position");
+    DEBUG_GL
+    a.v_color = glGetAttribLocation(p->program_id, "v_color");
+    DEBUG_GL
+    p->attribs = a;
+
+    // Set up program uniforms
+    uniforms_t u;
+    u.proj_matrix = glGetUniformLocation(p->program_id, "proj_matrix");
+    DEBUG_GL
+    u.model_matrix = glGetUniformLocation(p->program_id, "model_matrix");
+    DEBUG_GL
+    u.view_matrix = glGetUniformLocation(p->program_id, "view_matrix");
+    DEBUG_GL
+    p->uniforms = u;
+
+
+    printf("v_position %i\n", a.v_position);
+    printf("v_color %i\n", a.v_color);
+
+    printf("proj_matrix %i\n", u.proj_matrix);
+    printf("model_matrix %i\n", u.model_matrix);
+    printf("view_matrix %i\n", u.view_matrix);
+
+    printf("v_position %i\n", p->attribs.v_position);
+    printf("v_color %i\n", p->attribs.v_color);
+
+    printf("proj_matrix %i\n", p->uniforms.proj_matrix);
+    printf("model_matrix %i\n", p->uniforms.model_matrix);
+    printf("view_matrix %i\n", p->uniforms.view_matrix);
+
+}
+
+void use_program(program_t *p) {
+	glUseProgram(p->program_id);
     return;
 }

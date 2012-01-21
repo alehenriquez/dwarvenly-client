@@ -2,8 +2,7 @@ ROOT_DIR = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CC = clang
 CFLAGS = -fPIC -std=c99 -O0 -W -Wall -Wextra -Werror \
- -fno-strict-aliasing -DNDEBUG -pipe							 \
- -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable \
+ -fno-strict-aliasing -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable \
  -I/usr/local/include -L/usr/local/lib
 
 CFILES = $(wildcard *.c)
