@@ -61,7 +61,7 @@ int main() {
 	float vert2[24] = {
 	    -0.5, -0.5, 0.5,
         0.5, -0.5, 0.5,
-	    0.5, 0.5, 0.0,
+	    0.5, 0.5, 0.5,
 	    -0.5, 0.5, 0.5,
 	    -0.5, -0.5,-0.5,
         0.5, -0.5,-0.5,
@@ -211,15 +211,8 @@ int main() {
         nextpolation = (phys_accum / phys_step);
         prevpolation = 1 - nextpolation;
 
-        //rotate(local_mat2, 0.002, x_axis);
-        //rotate(local_mat2, 0.006, y_axis);
-        //rotate(model_mat2, 0.005, z_axis);
 
         bind_model(&mod);
-        DEBUG_GL
-        //bind_graphics(&g1);
-        DEBUG_GL
-        //draw_graphics(&g1);
         DEBUG_GL
         bind_graphics(&g1);
         DEBUG_GL
