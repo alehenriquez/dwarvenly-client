@@ -26,25 +26,22 @@ typedef struct vertex {
 typedef struct model {
     // GPU side data
 	GLuint v_vbo_id;
-    GLuint c_vbo_id;
 	GLuint ibo_id;
 	GLuint vao_id;
+	GLuint tex_image;
 
     // CPU side data
     unsigned short vertices_len;
-    unsigned short colors_len;
     unsigned int indices_len;
 
     GLfloat *vertices;
-    GLfloat *colors;
 	unsigned short *indices;
 
 	program_t *program;
 } model_t;
 
-model_t mk_model(program_t *p,
+model_t mk_model(char *image_file, program_t *p,
                  GLfloat *vertices, unsigned short vertices_len,
-                 GLfloat *colors, unsigned short colors_len,
                  unsigned short *indices, unsigned int indices_len);
 void bind_model(model_t *m);
 void rm_model(model_t *m);

@@ -23,10 +23,12 @@
 #include "utils.h"
 #endif
 
+#ifndef SETTINGS_H
+#include "settings.h"
+#endif
+
 
 static int running = 1;
-
-
 
 int main() {
     perspective_t p = {
@@ -40,9 +42,9 @@ int main() {
     DEBUG_GL
 
     cam_loc_t c_loc = {
-        .x =0.0, .y =1.0, .z =1.0,
+        .x =0.0, .y =0.5, .z =-1.1,
         .fx=0.0, .fy=0.0, .fz=2.0,
-        .ux=0.0, .uy=2.0, .uz=0.0
+        .ux=0.0, .uy=1.0, .uz=0.0
     };
     camera_t cam = mk_camera(p, c_loc);
     DEBUG_GL
@@ -57,30 +59,19 @@ int main() {
     use_program(&pr1);
     DEBUG_GL
 
-	// Second simple object
-	float vert2[24] = {
-	    -0.5, -0.5, 0.5,
+    // Second simple object
+    float vert2[24] = {
+        -0.5, -0.5, 0.5,
         0.5, -0.5, 0.5,
-	    0.5, 0.5, 0.5,
-	    -0.5, 0.5, 0.5,
-	    -0.5, -0.5,-0.5,
+        0.5, 0.5, 0.5,
+        -0.5, 0.5, 0.5,
+        -0.5, -0.5,-0.5,
         0.5, -0.5,-0.5,
-	    0.5, 0.5,-0.5,
-	    -0.5, 0.5,-0.5
+        0.5, 0.5,-0.5,
+        -0.5, 0.5,-0.5
     };	// vertex array
 
-    float col2[24] = {
-	    0.0, 0.0, 0.0,
-	    1.0, 0.0, 0.0,
-        0.0, 1.0, 0.0,
-        1.0, 1.0, 0.0,
-        0.0, 0.0, 1.0,
-        1.0, 0.0, 1.0,
-        0.0, 1.0, 1.0,
-        1.0, 1.0, 1.0
-	};
-
-	unsigned short indices2[36] = {
+    unsigned short indices2[36] = {
         0, 1, 2, // front
         0, 2, 3, //
         3, 2, 6, // top
@@ -93,7 +84,7 @@ int main() {
         0, 7, 4, //
         1, 5, 6, // right
         1, 6, 2 //
-	};
+    };
 
 
     float model_mat1[] = {
@@ -134,7 +125,6 @@ int main() {
     DEBUG_GL
 
     printf("v_position %i\n", pr1.attribs.v_position);
-    printf("v_color %i\n", pr1.attribs.v_color);
 
     printf("proj_matrix %i\n", pr1.uniforms.proj_matrix);
     printf("model_matrix %i\n", pr1.uniforms.model_matrix);
@@ -142,16 +132,27 @@ int main() {
 
     DEBUG_GL
 
-	// VAO setup
-	model_t mod = mk_model(&pr1, vert2, 24, col2, 24, indices2, 36);
-	DEBUG_GL
-	graphics_t g1 = mk_graphics(&pr1, &cam, &mod, model_mat1);
-	graphics_t g2 = mk_graphics(&pr1, &cam, &mod, model_mat2);
-	graphics_t g3 = mk_graphics(&pr1, &cam, &mod, model_mat3);
-	graphics_t g4 = mk_graphics(&pr1, &cam, &mod, model_mat4);
-	graphics_t g5 = mk_graphics(&pr1, &cam, &mod, model_mat5);
-	DEBUG_GL
-	glBindVertexArray(0);
+    // VAO setup
+    model_t dirt = mk_model("data/textures/default/dirt.png", &pr1, vert2, 24, indices2, 36);
+    model_t stone = mk_model("data/textures/default/stone.png", &pr1, vert2, 24, indices2, 36);
+    model_t grass = mk_model("data/textures/default/grass.png", &pr1, vert2, 24, indices2, 36);
+    model_t sand = mk_model("data/textures/default/sand.png", &pr1, vert2, 24, indices2, 36);
+    model_t tundra = mk_model("data/textures/default/tundra.png", &pr1, vert2, 24, indices2, 36);
+    model_t snow = mk_model("data/textures/default/snow.png", &pr1, vert2, 24, indices2, 36);
+    model_t bog = mk_model("data/textures/default/bog.png", &pr1, vert2, 24, indices2, 36);
+
+    printf("models:\n\tdirt %u\n\tstone %u\n\tgrass %u\n\tsand %u\n\ttundra %u\n\tsnow %u\n\tbog %u\n",
+           dirt.tex_image, stone.tex_image, grass.tex_image, sand.tex_image, tundra.tex_image, snow.tex_image, bog.tex_image);
+
+
+    DEBUG_GL
+    graphics_t g1 = mk_graphics(&pr1, &cam, &dirt, model_mat1);
+    graphics_t g2 = mk_graphics(&pr1, &cam, &stone, model_mat2);
+    graphics_t g3 = mk_graphics(&pr1, &cam, &grass, model_mat3);
+    graphics_t g4 = mk_graphics(&pr1, &cam, &sand, model_mat4);
+    graphics_t g5 = mk_graphics(&pr1, &cam, &tundra, model_mat5);
+    DEBUG_GL
+    glBindVertexArray(0);
     DEBUG_GL
 
 
@@ -167,6 +168,9 @@ int main() {
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe debug
     glEnable(GL_CULL_FACE);
 
+
+    glEnable(GL_TEXTURE_CUBE_MAP);
+    //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     double curr = glfwGetTime();
     double prev = curr;
@@ -185,7 +189,7 @@ int main() {
         DEBUG_GL
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-               prev = curr;
+        prev = curr;
         curr = glfwGetTime();
         dt = curr - prev;
 
@@ -211,8 +215,6 @@ int main() {
         nextpolation = (phys_accum / phys_step);
         prevpolation = 1 - nextpolation;
 
-
-        bind_model(&mod);
         DEBUG_GL
         bind_graphics(&g1);
         DEBUG_GL

@@ -94,6 +94,7 @@ graphics_t mk_graphics(program_t *p, camera_t *c, model_t *m, float *model_mat) 
 }
 
 void bind_graphics(graphics_t *g) {
+    bind_model(g->model);
     glUseProgram(g->program->program_id);
     return;
 }

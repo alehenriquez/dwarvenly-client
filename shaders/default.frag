@@ -1,6 +1,8 @@
 #version 330
 
-in vec3 ex_color;
+
+in vec4 ex_texel;
+
 out vec4 frag_color;
 
 void main () {
@@ -11,5 +13,5 @@ void main () {
     vec3 nv_to_light = normalize(v_to_light);
     float diff = clamp(dot(n_normal, v_to_light), 0.0, 1.0);
     */
-    frag_color = vec4(ex_color, 1.0f);
+    frag_color = ex_texel;
 }

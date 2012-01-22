@@ -10,7 +10,7 @@ CFILES = $(wildcard *.c)
 all: client
 
 client:
-	$(CC) $(CFLAGS) $(CFILES) /usr/local/lib/libglfw.a -lGL -lX11 -lXrandr -o build/client
+	$(CC) $(CFLAGS) $(CFILES) /usr/local/lib/libglfw.a -lGL -lX11 -lXrandr -lSOIL -o build/client
 
 clean:
 	rm -rf build

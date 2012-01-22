@@ -17,13 +17,13 @@ typedef struct shader {
 
 typedef struct attribs {
     GLint v_position;
-    GLint v_color;
 } attribs_t;
 
 typedef struct uniforms {
     GLint proj_matrix;
     GLint model_matrix;
     GLint view_matrix;
+    GLint tex_image;
 } uniforms_t;
 
 

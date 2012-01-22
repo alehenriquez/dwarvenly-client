@@ -1,0 +1,11 @@
+{
+    "air": 0,
+    "dirt": 1,
+    "stone": 2,
+
+    "grass": 128,
+    "sand": 129,
+    "tundra": 130,
+    "snow": 131,
+    "bog": 132
+}
