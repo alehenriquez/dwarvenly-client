@@ -12,6 +12,6 @@ out vec3 ex_color;
 
 
 void main(void) {
-    gl_Position = view_matrix * model_matrix *vec4(v_position, 1.0f);
+    gl_Position = proj_matrix * view_matrix* model_matrix * vec4(v_position, 1.0f);
     ex_color = v_color;
 }

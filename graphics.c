@@ -11,8 +11,6 @@
 
 // Utilities
 #define BUFFER_OFFSET(offset) ((GLvoid*) (offset))
-#define EMPTY_MATRIX { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-#define IDENTITY_MATRIX { 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
 
 #define PI_DIV_180 0.0174532925199
 
@@ -89,9 +87,6 @@ graphics_t mk_graphics(program_t *p, camera_t *c, model_t *m, float *model_mat) 
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, g.ubo_id); // This is the same 0
     DEBUG_GL
     */
-    g.model_matrix_loc = glGetUniformLocation(p->program_id, "model_matrix");
-    DEBUG_GL
-
     g.program = p;
     g.camera = c;
 
@@ -108,8 +103,12 @@ void rm_graphics(graphics_t *g) {
 }
 
 void draw_graphics(graphics_t *g) {
-    glUniformMatrix4fv(g->model_matrix_loc, 1, GL_FALSE, g->model_matrix);
-    glUniformMatrix4fv(g->program->view_matrix, 1, GL_FALSE, g->camera->cam_matrix);
-    glUniformMatrix4fv(g->program->proj_matrix, 1, GL_FALSE, g->camera->persp_matrix);
+    glUniformMatrix4fv(g->program->uniforms.model_matrix, 1, GL_FALSE, g->model_matrix);
+    DEBUG_GL
+    glUniformMatrix4fv(g->program->uniforms.view_matrix, 1, GL_FALSE, g->camera->cam_matrix);
+    DEBUG_GL
+    glUniformMatrix4fv(g->program->uniforms.proj_matrix, 1, GL_FALSE, g->camera->persp_matrix);
+    DEBUG_GL
     draw_model(g->model);
+    DEBUG_GL
 }

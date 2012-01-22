@@ -29,10 +29,6 @@ typedef struct uniforms {
 
 typedef struct program {
     GLuint program_id;
-    GLuint v_position;
-    GLuint v_normal;
-    GLuint proj_matrix;
-    GLuint view_matrix;
     int is_compiled;
 
     attribs_t attribs;

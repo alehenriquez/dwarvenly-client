@@ -15,6 +15,8 @@
 #include "models.h"
 #endif
 
+#define EMPTY_MATRIX { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+#define IDENTITY_MATRIX { 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
 
 typedef struct transformation {
     float *proj_matrix;
@@ -24,13 +26,13 @@ typedef struct transformation {
 
 typedef struct graphics {
     // GPU side data
-    GLuint model_matrix_loc;
     GLuint ubo_id;
     GLuint ubo_loc;
 
     // CPU side data
     model_t *model;
     float *model_matrix;
+
     transformation_t trans;
     program_t *program;
     camera_t *camera;
