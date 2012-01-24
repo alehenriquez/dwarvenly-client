@@ -17,6 +17,8 @@ typedef struct shader {
 
 typedef struct attribs {
     GLint v_position;
+    GLint v_normal;
+    GLint v_texcoords;
 } attribs_t;
 
 typedef struct uniforms {

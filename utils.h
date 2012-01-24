@@ -14,3 +14,4 @@
 
 int check_gl_errors();
 void print_matrix(float *);
+char *getfile(char *filename); // char * is NULL or entire file contents.

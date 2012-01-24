@@ -31,24 +31,26 @@
 static int running = 1;
 
 int main() {
+    settings_t s = load_settings("data/settings.json");
+
     perspective_t p = {
         .fovy=60.0,
-        .aspect=(float)1024/(float)768,
+        .aspect=(float)s.window_width/(float)s.window_height,
         .znear=1.0,
         .zfar=300.0
     };
 
-    win_open(&p, 1024, 768, 8, 8, 8, 0, 24, 8, 1);
+    win_open(&p, s.window_width, s.window_height, 8, 8, 8, 0, 24, 8, 1);
     DEBUG_GL
 
     cam_loc_t c_loc = {
-        .x =0.0, .y =0.5, .z =-1.1,
+        .x =0.0, .y =1.5, .z =-0.1,
         .fx=0.0, .fy=0.0, .fz=2.0,
         .ux=0.0, .uy=1.0, .uz=0.0
     };
     camera_t cam = mk_camera(p, c_loc);
     DEBUG_GL
-    glClearColor(0.2, 0.75, 0.1, 1.0);
+    glClearColor(0.8, 0.8, 0.8, 1.0);
     DEBUG_GL
     GLuint sh1 = mk_shader("shaders/default.vert");
     DEBUG_GL
@@ -59,33 +61,25 @@ int main() {
     use_program(&pr1);
     DEBUG_GL
 
-    // Second simple object
-    float vert2[24] = {
-        -0.5, -0.5, 0.5,
-        0.5, -0.5, 0.5,
-        0.5, 0.5, 0.5,
-        -0.5, 0.5, 0.5,
-        -0.5, -0.5,-0.5,
-        0.5, -0.5,-0.5,
-        0.5, 0.5,-0.5,
-        -0.5, 0.5,-0.5
-    };	// vertex array
+    printf("v_position %i\n", pr1.attribs.v_position);
+    printf("v_normal %i\n", pr1.attribs.v_normal);
+    printf("v_texcoords %i\n", pr1.attribs.v_texcoords);
+    printf("proj_matrix %i\n", pr1.uniforms.proj_matrix);
+    printf("model_matrix %i\n", pr1.uniforms.model_matrix);
+    printf("view_matrix %i\n", pr1.uniforms.view_matrix);
 
-    unsigned short indices2[36] = {
-        0, 1, 2, // front
-        0, 2, 3, //
-        3, 2, 6, // top
-        3, 6, 7, //
-        7, 6, 5, // back
-        7, 5, 4, //
-        0, 4, 5, // bottom
-        0, 5, 1, //
-        0, 3, 7, // left
-        0, 7, 4, //
-        1, 5, 6, // right
-        1, 6, 2 //
-    };
+    load_models("data/models.json", &s, &pr1);
+    DEBUG_GL
 
+    // VAO setup
+    printf("models:\n\tdirt %u\n\tstone %u\n\tgrass %u\n\tsand %u\n\ttundra %u\n\tsnow %u\n\tbog %u\n",
+           models[DIRT].tex_image,
+           models[STONE].tex_image,
+           models[GRASS].tex_image,
+           models[SAND].tex_image,
+           models[TUNDRA].tex_image,
+           models[SNOW].tex_image,
+           models[BOG].tex_image);
 
     float model_mat1[] = {
         1.0, 0.0, 0.0, 0.0,
@@ -123,34 +117,11 @@ int main() {
     };
 
     DEBUG_GL
-
-    printf("v_position %i\n", pr1.attribs.v_position);
-
-    printf("proj_matrix %i\n", pr1.uniforms.proj_matrix);
-    printf("model_matrix %i\n", pr1.uniforms.model_matrix);
-    printf("view_matrix %i\n", pr1.uniforms.view_matrix);
-
-    DEBUG_GL
-
-    // VAO setup
-    model_t dirt = mk_model("data/textures/default/dirt.png", &pr1, vert2, 24, indices2, 36);
-    model_t stone = mk_model("data/textures/default/stone.png", &pr1, vert2, 24, indices2, 36);
-    model_t grass = mk_model("data/textures/default/grass.png", &pr1, vert2, 24, indices2, 36);
-    model_t sand = mk_model("data/textures/default/sand.png", &pr1, vert2, 24, indices2, 36);
-    model_t tundra = mk_model("data/textures/default/tundra.png", &pr1, vert2, 24, indices2, 36);
-    model_t snow = mk_model("data/textures/default/snow.png", &pr1, vert2, 24, indices2, 36);
-    model_t bog = mk_model("data/textures/default/bog.png", &pr1, vert2, 24, indices2, 36);
-
-    printf("models:\n\tdirt %u\n\tstone %u\n\tgrass %u\n\tsand %u\n\ttundra %u\n\tsnow %u\n\tbog %u\n",
-           dirt.tex_image, stone.tex_image, grass.tex_image, sand.tex_image, tundra.tex_image, snow.tex_image, bog.tex_image);
-
-
-    DEBUG_GL
-    graphics_t g1 = mk_graphics(&pr1, &cam, &dirt, model_mat1);
-    graphics_t g2 = mk_graphics(&pr1, &cam, &stone, model_mat2);
-    graphics_t g3 = mk_graphics(&pr1, &cam, &grass, model_mat3);
-    graphics_t g4 = mk_graphics(&pr1, &cam, &sand, model_mat4);
-    graphics_t g5 = mk_graphics(&pr1, &cam, &tundra, model_mat5);
+    graphics_t g1 = mk_graphics(&pr1, &cam, &models[DIRT], model_mat1);
+    graphics_t g2 = mk_graphics(&pr1, &cam, &models[STONE], model_mat2);
+    graphics_t g3 = mk_graphics(&pr1, &cam, &models[GRASS], model_mat3);
+    graphics_t g4 = mk_graphics(&pr1, &cam, &models[SAND], model_mat4);
+    graphics_t g5 = mk_graphics(&pr1, &cam, &models[TUNDRA], model_mat5);
     DEBUG_GL
     glBindVertexArray(0);
     DEBUG_GL

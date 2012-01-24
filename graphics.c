@@ -110,6 +110,6 @@ void draw_graphics(graphics_t *g) {
     DEBUG_GL
     glUniformMatrix4fv(g->program->uniforms.proj_matrix, 1, GL_FALSE, g->camera->persp_matrix);
     DEBUG_GL
-    draw_model(g->model);
+    glDrawElements(GL_TRIANGLES, sizeof(unsigned short)*g->model->indices_len, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
     DEBUG_GL
 }

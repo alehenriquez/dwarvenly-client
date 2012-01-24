@@ -314,6 +314,10 @@ void compile_program(program_t *p) {
     attribs_t a;
     a.v_position = glGetAttribLocation(p->program_id, "v_position");
     DEBUG_GL
+    a.v_normal = glGetAttribLocation(p->program_id, "v_normal");
+    DEBUG_GL
+    a.v_texcoords = glGetAttribLocation(p->program_id, "v_texcoords");
+    DEBUG_GL
     p->attribs = a;
 
     // Set up program uniforms
@@ -327,18 +331,6 @@ void compile_program(program_t *p) {
     u.tex_image = glGetUniformLocation(p->program_id, "tex_image");
     DEBUG_GL
     p->uniforms = u;
-
-    printf("v_position %i\n", a.v_position);
-
-    printf("proj_matrix %i\n", u.proj_matrix);
-    printf("model_matrix %i\n", u.model_matrix);
-    printf("view_matrix %i\n", u.view_matrix);
-
-    printf("v_position %i\n", p->attribs.v_position);
-
-    printf("proj_matrix %i\n", p->uniforms.proj_matrix);
-    printf("model_matrix %i\n", p->uniforms.model_matrix);
-    printf("view_matrix %i\n", p->uniforms.view_matrix);
 
 }
 
