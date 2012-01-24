@@ -173,6 +173,9 @@ void load_models(char *filename, settings_t *settings, program_t *program) {
                                                        SOIL_LOAD_AUTO,
                                                        SOIL_CREATE_NEW_ID,
                                                        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y);
+            if (!m.tex_image) {
+                fprintf(stderr, "SOIL loading error: %s\n", SOIL_last_result());
+            }
             printf(" and id %d\n", m.tex_image);
         }
 
