@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
 
 #include <json/json.h>
 
@@ -17,46 +16,50 @@
 #include "utils.h"
 #endif
 
-static inline void json_debug(json_error_t* err) {
-	assert(err != NULL);
-	fprintf(stderr, "JSON error at \"%s\", line %ld col %ld\n    err: %s\n", err->source, err->line, err->column, err->text);
-	fflush(stderr);
-}
+#ifndef DEBUG_H
+#include <locust/rt.debug.h>
+#endif
 
 settings_t load_settings(char *filename) {
+    assert(filename != NULL);
 	settings_t s = {0};
-    printf("Loading settings from: %s ...", filename);
-    fflush(stdout);
+    info("Loading settings from: %s ...", filename);
     char *contents = getfile(filename);
-    printf("file read...");
-    fflush(stdout);
-    if (contents == NULL) {
-        fprintf(stderr, "JSON error %s\n", filename);
-        fflush(stderr);
-        return s;
-    }
+    info("file read...");
+    warn_goto_if(contents == NULL, "JSON error %s\n", filename);
 
 	json_error_t err;
     json_t *root = json_loads(contents, 0, &err);
-    if (root == NULL) {
-		json_debug(&err);
-        return s;
-    }
+    warn_goto_if(root == NULL, "JSON error at \"%s\", line %d col %d\n    err: %s\n", err.source, err.line, err.column, err.text);
+    
 	json_t *width = json_object_get(root, "window_width");
-	assert(json_is_integer(width));
-	s.window_width = (int)json_integer_value(width);
+    if (!json_is_integer(width)) {
+        warn("JSON type error: width not integer");
+        s.window_width = 1024;
+    } else {
+        s.window_width = (int)json_integer_value(width);
+    }
 
     json_t *height = json_object_get(root, "window_height");
-	assert(json_is_integer(height));
-	s.window_height = (int)json_integer_value(height);
+    if (!json_is_integer(height)) {
+        warn("JSON type error: height not integer");
+        s.window_height = 768;
+    } else {
+        s.window_height = (int)json_integer_value(height);    
+    }
+	
 
     json_t *texture_set = json_object_get(root, "texture_set");
-	assert(json_is_string(texture_set));
-	s.texture_set = json_string_value(texture_set);
+    if (!json_is_string(texture_set)) {
+        warn("JSON type error: texture_set not string");
+        s.texture_set = "";
+    } else {
+        s.texture_set = json_string_value(texture_set);    
+    }	
     
-    printf("done! %s\n", s.texture_set);
-    fflush(stdout);
+    debug("load_settings() done! %s\n", s.texture_set);
 
-    free(contents);
+warn:
+    if (contents) free(contents);
     return s;
 }

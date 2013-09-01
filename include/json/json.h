@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Petri Lehtinen <petri@digip.org>
  *
- * Jansson is free software; you can redistribute it and/or modify
+ * JSON is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
  */
 
@@ -20,18 +20,18 @@ extern "C" {
 
 /* version */
 
-#define JANSSON_MAJOR_VERSION  2
-#define JANSSON_MINOR_VERSION  4
-#define JANSSON_MICRO_VERSION  99
+#define JSON_MAJOR_VERSION  2
+#define JSON_MINOR_VERSION  4
+#define JSON_MICRO_VERSION  99
 
 /* Micro version is omitted if it's 0 */
-#define JANSSON_VERSION  "2.5-dev"
+#define JSON_VERSION  "2.5-dev"
 
 /* Version as a 3-byte hex number, e.g. 0x010201 == 1.2.1. Use this
-   for numeric comparisons, e.g. #if JANSSON_VERSION_HEX >= ... */
-#define JANSSON_VERSION_HEX  ((JANSSON_MAJOR_VERSION << 16) |   \
-                              (JANSSON_MINOR_VERSION << 8)  |   \
-                              (JANSSON_MICRO_VERSION << 0))
+   for numeric comparisons, e.g. #if JSON_VERSION_HEX >= ... */
+#define JSON_VERSION_HEX  ((JSON_MAJOR_VERSION << 16) |   \
+                           (JSON_MINOR_VERSION << 8)  |   \
+                           (JSON_MICRO_VERSION << 0))
 
 
 /* types */

@@ -1,0 +1,54 @@
+#ifndef WAITS_H
+#include <locust/sched.waits.h>
+#endif
+
+#ifndef INSPECT_H
+#include <locust/rt.inspect.h>
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+
+
+// PoSix
+#include <sched.h>
+#include <unistd.h>
+#include <time.h>
+
+extern uint64 __threads_count;
+
+void wait_gradual(uint8 rate) {
+    // POSIX implementation
+    // TODO: Handle other architectures, but x86ish assembly is good for now
+    if (rate < 30) {
+        if (__threads_count > 1) {
+            // Since we have multiple processors, we can do active spinning in
+            // the hopes that someone else will do whatever we're deferring for
+            for (unsigned i=rate+1; i>0; i--) {
+                __asm__("pause");
+            }
+        } else {
+            // We're either on a single processor system, or assuming we are, so
+            // passive waiting is required, or the other threads won't be able
+            // to accomplish whatever we're deferring for
+            sched_yield();
+        }
+    } else if (rate < 32) {
+        sched_yield();
+    } else {
+        struct timespec req, *rem=NULL;
+        if (rate < 64) {
+            req.tv_sec = 0;
+            req.tv_nsec = 100000000; // 1/10th of a second. May need finagling.
+        } else if (rate < 128) {
+            req.tv_sec = 1;
+            req.tv_nsec = 1000000000; // 1 second.
+        } else {
+            req.tv_sec = 10;
+            req.tv_nsec = 10000000000; // 10 seconds.
+        }
+        nanosleep(&req, rem);
+    }
+}
+
+

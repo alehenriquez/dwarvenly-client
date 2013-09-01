@@ -14,7 +14,10 @@ model_t models[256];
 
 #include <json/json.h>
 
-#include <assert.h>
+#ifndef DEBUG_H
+#include <locust/rt.debug.h>
+#endif
+
 #include <string.h>
 
 
@@ -30,6 +33,10 @@ static inline void json_debug(json_error_t* err) {
 }
 
 void load_models(char *filename, settings_t *settings, program_t *program) {
+	assert(filename != NULL);
+	assert(settings != NULL);
+	assert(program != NULL);
+
     char *buff = getfile(filename);
     if (buff == NULL) {
         fprintf(stderr, "load_models(%s) failed.", filename);
@@ -133,7 +140,8 @@ void load_models(char *filename, settings_t *settings, program_t *program) {
 #define SETVAL(source, index, dest) \
 	tmp = json_array_get(source, index); \
 	assert(json_is_real(tmp)); \
-	vertices[k].##dest = (float)json_real_value(tmp);
+	*((float*)&vertices[k]+offsetof(vertex_t, dest)) = (float)json_real_value(tmp);
+
 
 		for (j=0, k=0; j < vertices_len; j+=3, ++k) {
 			SETVAL(verts, j, x);
@@ -221,6 +229,7 @@ void load_models(char *filename, settings_t *settings, program_t *program) {
 }
 
 void bind_model(model_t *m) {
+	assert(m != NULL);
     glBindVertexArray(m->vao_id);
 	DEBUG_GL
 	glActiveTexture(GL_TEXTURE0+0);
@@ -234,6 +243,7 @@ void bind_model(model_t *m) {
 }
 
 void rm_model(model_t *m) {
+	assert(m != NULL);
     glDeleteBuffers(1, &m->v_vbo_id);
     glDeleteBuffers(1, &m->ibo_id);
 }

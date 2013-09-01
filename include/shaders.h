@@ -2,18 +2,19 @@
 
 #include <stdio.h>
 #include <GL3/gl3w.h>
-#include <GL/glfw.h>
+#include <GLFW/glfw3.h>
 
-#ifndef CAMERA_H
-#include "camera.h"
+/*
+#ifndef GRAPHICS_H
+#include "graphics.h"
 #endif
+*/
 
 typedef struct shader {
 	GLsizei buf_num;
 	GLchar **buf;
 	GLint *buf_len;
 } shader_t;
-
 
 typedef struct attribs {
     GLint v_position;
@@ -41,13 +42,11 @@ typedef struct program {
     uniforms_t uniforms;
 } program_t;
 
-/*
-*/
 
 shader_t file_to_shader(FILE *f);
 GLuint mk_shader(char *filename);
 void rm_shader(GLuint shader_id);
-program_t mk_program(camera_t *c, GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id);
+program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id);
 void compile_program(program_t *p);
 void rm_program(program_t *p);
 void use_program(program_t *p);

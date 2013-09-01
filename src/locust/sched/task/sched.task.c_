@@ -1,0 +1,222 @@
+#ifndef TASK_H
+#include <locust/sched.task.h>
+#endif
+
+TYPE_ID_DEF(task);
+
+META_FIELDS_DEF(task) = {
+    8, {
+        {TYPE_ID_OF(uint64), sizeof(uint64), "id"},
+		{TYPE_ID_OF(ptr), sizeof(const byte*), "name"},
+		{TYPE_ID_OF(context), sizeof(context), "ctx"},
+        {TYPE_ID_OF(ptr), sizeof(ptr), "start_fn"},
+        {TYPE_ID_OF(ptr), sizeof(ptr), "start_arg"},
+        {TYPE_ID_OF(ptr), sizeof(ptr), "data"},
+        {TYPE_ID_OF(uint64), sizeof(uint64), "stack_len"},
+		{TYPE_ID_OF(ptr), sizeof(ptr), "stack"},
+		{TYPE_ID_OF(uint32), sizeof(uint32), "state"},
+    }
+};
+
+META_DEF(task, & META_FIELDS_OF(task), nil);
+
+#ifndef THREAD_H
+#include <locust/sched.threads.h>
+#endif
+
+#ifndef ASSERT_H
+#include <locust/rt.assert.h>
+#endif
+
+#ifndef MEM_H
+#include <locust/rt.mem.h>
+#endif
+
+#ifdef __TARGET_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+#else
+#include <sys/mman.h>
+#endif
+#include <stdlib.h>
+#include <stdio.h>
+
+int	taskdebuglevel;
+int	taskcount;
+int	tasknswitch;
+int	taskexitval;
+
+/*
+ * Tasks
+ * Copyright (c) 2005 Russ Cox, MIT; see LIBTASK_COPYRIGHT
+ * Altered by AndrewBC - 2012
+ */
+
+static inline void task_run(task *self) {
+    assert(self != nil);
+	self->start_fn(self->start_arg);
+	task_exit(self);
+}
+
+/*
+task* task_create(const byte *name, void (*fn)(ptr), ptr arg, uint64 stack_len) {
+    assert(name != nil);
+    assert(fn != nil);
+
+    task *t = mem_get(& META_OF(task), 1);
+    assert(t != nil);
+    task_init(t, name, fn, arg, stack_len);
+
+	printf("task_create 1 \"%s\"\n", name);
+    fflush(stdout);
+	task_schedule(t);
+	printf("task_create 2\n");
+    fflush(stdout);
+    return t;
+}
+*/
+
+
+static uint64 taskidgen;
+
+void task_init(task *self, const byte *name, void (*fn)(ptr), ptr arg, uint64 stack_len) {
+    assert(self != nil);
+    assert(name != nil);
+    assert(fn != nil);
+#ifdef __TARGET_WINDOWS
+	self->stack = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, (uint32)(stack_len>>32), (uint32)(stack_len), NULL);
+	assert(self->stack != NULL);
+#else
+    self->stack = mmap(NULL, stack_len, PROT_WRITE|PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	assert(self->stack != MAP_FAILED);
+#endif
+	self->stack_len = stack_len;
+	self->id = ++taskidgen;
+	self->name = name;
+	self->state = 0;
+	self->start_fn = fn;
+	self->start_arg = arg;
+
+	/* do a reasonable initialization */
+	mem_set(&self->ctx, sizeof(context), 0);
+
+	/* initialize with current context */
+	context* ctx = &self->ctx;
+
+	// There used to be sun specific code here. lulz.
+	printf("task_init 1, func: %lp\n", fn);
+    fflush(stdout);
+
+    /* leave a few words open on both ends */
+	context_init(&self->ctx, self->stack_len-64, self->stack+32, fn, arg);
+	printf("task_init 2\n");
+    fflush(stdout);
+    return;
+}
+
+void task_deinit(task *self) {
+    assert(self != nil);
+#ifdef __TARGET_WINDOWS
+	assert(UnmapViewOfFile(self->stack) != 0);
+#else
+    assert(munmap(self->stack, self->stack_len) == 0);
+#endif
+	return;
+}
+
+task* task_curr(void) {
+	thread *t = threads_curr();
+	assert(t != nil);
+	return t->curr_task;
+}
+
+void task_schedule(task *t) {
+    assert(t != nil);
+	thread *curr_thread = threads_curr();
+	assert(curr_thread != nil);
+    task_set_ready_on(t);
+    deque_back_push(curr_thread->tasks, & META_OF(ptr), &t);
+}
+
+void task_schedule_next(task *t) {
+    assert(t != nil);
+	thread *curr_thread = threads_curr();
+	assert(curr_thread != nil);
+	task_set_ready_on(t);
+    deque_front_push(curr_thread->tasks, & META_OF(ptr), &t);
+}
+
+void task_daemonize(task *t) {
+    assert(t != nil);
+    task_set_daemon_on(t);
+}
+
+void task_switch_to(task *t) {
+    assert(t != nil);
+
+	thread *thr = threads_curr();
+	assert(thr != nil);
+	task *tsk = thr->curr_task;
+	printf("\ntask: %ld \"%s\" -> %ld \"%s\"\n", tsk->id, tsk->name, t->id, t->name);
+	thr->curr_task = t;
+	context_swap(&tsk->ctx, &t->ctx);
+	thr->curr_task = tsk;
+}
+
+void overloaded task_yield(task *t, bool reschedule) {
+    assert(t != nil);
+	if (reschedule) {
+		task_schedule(t);
+	}
+	task_set_yielding_on(t);
+	task_needstack(t, 0);
+	task_set_yielding_off(t);
+	task_set_ready_off(t);
+	thread *curr_thread = threads_curr();
+	assert(curr_thread != nil);
+	context_swap(&t->ctx, curr_thread->sched_ctx);
+}
+
+void task_exit(task *t) {
+    assert(t != nil);
+    task_set_exiting_on(t);
+	task_yield(t, 0);
+}
+
+void task_exit_all(int value) {
+    exit(value);
+}
+
+void task_needstack(task *t, int n) {
+    assert(t != nil);
+	if((char*)&t <= (char*)t->stack
+	|| (char*)&t - (char*)t->stack < 256+n){
+	    die("task stack overflow: &t=%p tstk=%p n=%d\n", &t, t->stack, 256+n);
+	}
+}
+
+/*
+ * debugging
+ */
+/*
+static void taskinfo(int s) {
+	int i;
+	task *t;
+	char *extra;
+
+	fprintf(stderr, "task list:\n");
+	for(i=0; i<nalltask; i++){
+		t = alltask[i];
+		if(t == taskrunning)
+			extra = " (running)";
+		else if(t->ready)
+			extra = " (ready)";
+		else
+			extra = "";
+		fprintf(stderr, "%6d%c %-20s %s%s\n",
+			t->id, t->system ? 's' : ' ',
+			t->name, t->state, extra);
+	}
+}*/
+

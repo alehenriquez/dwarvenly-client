@@ -9,58 +9,20 @@
 #include "utils.h"
 #endif
 
+#include <stdio.h>
+
+const mat4 identity_matrix = IDENTITY_MATRIX;
+const mat4 empty_matrix = EMPTY_MATRIX;
+
 // Utilities
-#define BUFFER_OFFSET(offset) ((GLvoid*) (offset))
-
-#define PI_DIV_180 0.0174532925199
-
-
-
-void cross(float *r, float x1, float y1, float z1, float x2, float y2, float z2) {
-    r[0] = y1*z2 - y2*z1;
-    r[1] = x2*z1 - x1*z2;
-    r[2] = x1*y2 - x2*y1;
+void print_matrix(mat4 m) {
+    printf("[ %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f ]\n",
+               m._[0], m._[1], m._[2], m._[3],    m._[4], m._[5], m._[6], m._[7],    m._[8], m._[9],m._[10],m._[11],   m._[12],m._[13],m._[14],m._[15]);
 }
 
 
-void imul_matrix(GLfloat *m1, GLfloat *m2) {
-    GLfloat temp[16];
-    for (int x=0; x < 4; x++) {
-        for(int y=0; y < 4; y++) {
-            temp[y + (x*4)] = (m1[x*4] * m2[y]) +
-                              (m1[(x*4)+1] * m2[y+4]) +
-                              (m1[(x*4)+2] * m2[y+8]) +
-                              (m1[(x*4)+3] * m2[y+12]);
-        }
-    }
-    memcpy(m1, temp, sizeof(GLfloat) << 4);
-}
 
-void translate(GLfloat *m, GLfloat x, GLfloat y, GLfloat z) {
-    GLfloat newm[16] = IDENTITY_MATRIX;
-    newm[12] = x;
-    newm[13] = y;
-    newm[14] = z;
-
-    imul_matrix(m, newm);
-}
-
-void rotate(GLfloat *m, GLfloat angle, axis ax) {
-    const int cos1[3] = { 5, 0, 0 };
-    const int cos2[3] = { 10, 10, 5 };
-    const int sin1[3] = { 6, 2, 1 };
-    const int sin2[3] = { 9, 8, 4 };
-    GLfloat newm[16] = IDENTITY_MATRIX;
-
-    newm[cos1[ax]] = (float)cos(PI_DIV_180 * angle);
-    newm[sin1[ax]] = (float)-sin(PI_DIV_180 * angle);
-    newm[sin2[ax]] =-newm[sin1[ax]];
-    newm[cos2[ax]] = newm[cos1[ax]];
-
-    imul_matrix(m, newm);
-}
-
-graphics_t mk_graphics(program_t *p, camera_t *c, model_t *m, float *model_mat, GLfloat *ambient_color, GLfloat *diffuse_color, GLfloat *specular_color, GLfloat *light_pos) {
+graphics_t mk_graphics(program_t *p, camera *c, model_t *m, float *model_mat, GLfloat *ambient_color, GLfloat *diffuse_color, GLfloat *specular_color, GLfloat *light_pos) {
 	graphics_t g;
 
 	g.model = m;
@@ -122,13 +84,15 @@ void rm_graphics(graphics_t *g) {
     return;
 }
 
+//#define BUFFER_OFFSET(offset) ((GLvoid*) (offset))
+
 void draw_graphics(graphics_t *g) {
 	DEBUG_GL
     glUniformMatrix4fv(g->program->uniforms.model_matrix, 1, GL_FALSE, g->model_matrix);
     DEBUG_GL
-    glUniformMatrix4fv(g->program->uniforms.view_matrix, 1, GL_FALSE, g->camera->cam_matrix);
+    //glUniformMatrix4fv(g->program->uniforms.view_matrix, 1, GL_FALSE, g->camera->view_matrix._);
     DEBUG_GL
-    glUniformMatrix4fv(g->program->uniforms.proj_matrix, 1, GL_FALSE, g->camera->persp_matrix);
+    //glUniformMatrix4fv(g->program->uniforms.proj_matrix, 1, GL_FALSE, g->camera->projection_matrix._);
     DEBUG_GL
 	glUniform4fv(g->program->uniforms.ambient_color, 1, g->ambient_color);
 	DEBUG_GL
@@ -142,6 +106,6 @@ void draw_graphics(graphics_t *g) {
 	DEBUG_GL
 	glUniform3fv(g->program->uniforms.light_pos, 1, g->light_pos);
 	DEBUG_GL
-    glDrawElements(GL_TRIANGLES, sizeof(unsigned short)*g->model->indices_len, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
+    //glDrawElements(GL_TRIANGLES, sizeof(unsigned short)*g->model->indices_len, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
     DEBUG_GL
 }

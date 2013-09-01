@@ -10,6 +10,5 @@
 #else
 #define DEBUG_GL
 #endif
-int check_gl_errors();
-void print_matrix(float *);
+int check_gl_errors(void);
 char *getfile(char *filename); // char * is NULL or entire file contents.

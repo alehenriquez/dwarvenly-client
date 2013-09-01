@@ -4,7 +4,7 @@
 //#include <GL/glfw.h>
 
 #ifndef TYPES_H
-#include <types/types.h>
+#include <locust/type.types.h>
 #endif
 
 #ifndef SHADERS_H
@@ -20,14 +20,10 @@
 #endif
 
 typedef struct {
-    float x;
-    float y;
-    float z;
-    float nx;
-    float ny;
-    float nz;
-    float u;
-    float v;
+    float x, y, z;
+    float nx, ny, nz;
+    float u, v;
+    unsigned char a, r, g, b;
 } vertex_t;
 
 typedef struct model {

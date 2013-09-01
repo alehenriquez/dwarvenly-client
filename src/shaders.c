@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #ifndef SHADERS_H
 #include "shaders.h"
@@ -18,22 +17,22 @@
 #include "utils.h"
 #endif
 
+#ifndef DEBUG_H
+#include <locust/rt.debug.h>
+#endif
+
 #define BUF_SIZE 1024
 
 #define BUFFER_OFFSET(offset) ((GLvoid*) (offset))
 
 shader_t file_to_shader(FILE *f) {
+    assert(f != NULL);
 	shader_t s = {0};
 	unsigned buff_len = 0;
-
 	GLchar *buff = (GLchar*)malloc(sizeof(GLchar)*BUF_SIZE);
-
 	unsigned buffs_i = 0;
-
 	GLchar **buffs = (GLchar**)malloc(sizeof(GLchar*));
-
 	GLint *buffs_lens = (GLint*)malloc(sizeof(GLint));
-
 	void *temp;
 
     while (1) {
@@ -85,6 +84,7 @@ shader_t file_to_shader(FILE *f) {
 
 
 GLuint mk_shader(char *filename) {
+    assert(filename != NULL);
     GLuint shader_id;
     unsigned int type=0;
 
@@ -185,7 +185,7 @@ void rm_shader(GLuint shader_id) {
     return;
 }
 
-program_t mk_program(camera_t *c, GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id) {
+program_t mk_program(GLuint vertex_shader_id, GLuint fragment_shader_id, GLuint geometry_shader_id) {
 	program_t p;
 	p.is_compiled = 0;
 	p.program_id = 0;
@@ -245,11 +245,19 @@ program_t mk_program(camera_t *c, GLuint vertex_shader_id, GLuint fragment_shade
 }
 
 void rm_program(program_t *p) {
+    assert(p != NULL);
     glDeleteProgram(p->program_id);
     return;
 }
 
+void use_program(program_t *p) {
+    assert(p != NULL);
+    glUseProgram(p->program_id);
+    return;
+}
+
 void compile_program(program_t *p) {
+    assert(p != NULL);
     p->is_compiled = 0;
     glLinkProgram(p->program_id);
 
@@ -318,7 +326,8 @@ void compile_program(program_t *p) {
 	} attribs_t;
 	*/
     // Set up program attribs
-    attribs_t a;
+
+/*    attribs_t a;
     a.v_position = glGetAttribLocation(p->program_id, "v_position");
 	assert(a.v_position >= 0);
     DEBUG_GL
@@ -329,6 +338,7 @@ void compile_program(program_t *p) {
 	assert(a.v_texcoords >= 0);
     DEBUG_GL
     p->attribs = a;
+*/
 
 	/*
 	typedef struct uniforms {
@@ -344,6 +354,7 @@ void compile_program(program_t *p) {
 	} uniforms_t;
 	*/
     // Set up program uniforms
+/*
     uniforms_t u;
     u.proj_matrix = glGetUniformLocation(p->program_id, "proj_matrix");
 	assert(u.proj_matrix >= 0);
@@ -373,10 +384,5 @@ void compile_program(program_t *p) {
 	assert(u.normalmap >= 0);
     DEBUG_GL
     p->uniforms = u;
-
-}
-
-void use_program(program_t *p) {
-	glUseProgram(p->program_id);
-    return;
+*/
 }

@@ -10,100 +10,84 @@
 #include "utils.h"
 #endif
 
-#define FREAD_BUF_SIZE 1024
+#ifndef DEBUG_H
+#include <locust/rt.debug.h>
+#endif
 
-int check_gl_errors() {
+int check_gl_errors(void) {
     GLenum errCode;
     int did_error = 0;
     while ((errCode = glGetError()) != GL_NO_ERROR) {
         did_error = 1;
-        fprintf(stderr, "OpenGL Error: ");
         switch(errCode) {
             case GL_INVALID_ENUM:
-                fprintf(stderr, "<GL_INVALID_ENUM> An invalid value was specified for an enumerated argument.\n");
+                warn("GL_INVALID_ENUM: An invalid value was specified for an enumerated argument.\n");
             break;
             case GL_INVALID_VALUE:
-                fprintf(stderr, "<GL_INVALID_VALUE> A numeric argument was out of range.\n");
+                warn("GL_INVALID_VALUE: A numeric argument was out of range.\n");
             break;
             case GL_INVALID_OPERATION:
-                fprintf(stderr, "<GL_INVALID_OPERATION> An operation was attempted that is not allowed in the current state.\n");
+                warn("GL_INVALID_OPERATION: An operation was attempted that is not allowed in the current state.\n");
             break;
             case GL_OUT_OF_MEMORY:
-                fprintf(stderr, "<GL_OUT_MEMORY> There is insufficient memory to execute the requested command.\n");
+                warn("GL_OUT_MEMORY: There is insufficient memory to execute the requested command.\n");
             break;
             default:
-                fprintf(stderr, "<UNKNOWN_ERROR %d > This programmer doesn't know what OpenGL error was just thrown.\n", errCode);
+                warn("GL_UNKNOWN_ERROR: glGetError() -> %d -> This programmer doesn't know what OpenGL error was just thrown.\n", errCode);
             break;
         }
     }
     return did_error;
 }
 
-void print_matrix(float *m) {
-    printf("[ %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f\n  %5.2f %5.2f %5.2f %5.2f ]\n",
-               m[0], m[1], m[2], m[3],    m[4], m[5], m[6], m[7],    m[8], m[9],m[10],m[11],   m[12],m[13],m[14],m[15]);
-}
+#define GETFILE_BUF_SIZE 1024
 
 char *getfile(char *filename) {
+    assert(filename != NULL);
     unsigned buff_len = 0;
-    unsigned buff_cap = FREAD_BUF_SIZE;
-    char *buff, *temp;
+    unsigned buff_cap = GETFILE_BUF_SIZE;
+    char *buff = NULL;
+    char *temp = NULL;
+    FILE *f = NULL;
 
     buff = (char*)malloc(sizeof(char)*buff_cap);
-    if (buff == NULL) {
-        fprintf(stderr, "getfile(%s) error: Out of (malloc) memory.", filename);
-        return NULL;
-    }
+    error_goto_if(buff == NULL, "getfile(%s): Out of (malloc) memory.", filename);
 
     // Open file
-    FILE *f = fopen(filename, "r");
-    if (f == NULL) {
-        fprintf(stderr, "getfile(%s) error: Cannot open.\n", filename);
-        return NULL;
-    }
+    f = fopen(filename, "r");
+    error_goto_if(f == NULL, "getfile(%s): Cannot open.\n", filename);
 
     while (1) {
-        buff_len += fread(&buff[buff_len], sizeof(char), FREAD_BUF_SIZE, f);
+        buff_len += fread(&buff[buff_len], sizeof(char), GETFILE_BUF_SIZE, f);
 
         if (feof(f)) {
+            // Try to do a downward realloc.
             temp = (char*)realloc(buff, sizeof(char) * (buff_len+1));
             if (temp == NULL) {
-                fprintf(stderr, "getfile(%s) error: Out of (final realloc) memory.", filename);
-                free(buff);
-                return NULL;
+                warn("getfile(%s): downward realloc failed.", filename);
+            } else {
+                buff = temp;
             }
-            buff = temp;
-			buff[buff_len] = 0; // null terminate the char *
+            buff[buff_len] = 0; // null terminate the char *
 			break;
         }
 
-        if (ferror(f)) {
-            fprintf(stderr, "getfile(%s) error: ferror() while reading.", filename);
-            free(buff);
-            return NULL;
-        }
+        error_goto_if(ferror(f), "getfile(%s): ferror() while reading; errno: %s", filename, strerror(errno));
 
         // Ensure there is always at least FREAD_BUF_SIZE space to read into
-        if ((buff_cap - buff_len) < FREAD_BUF_SIZE) {
-            buff_cap = buff_len + (buff_cap - buff_len) + FREAD_BUF_SIZE;
+        if ((buff_cap - buff_len) < GETFILE_BUF_SIZE) {
+            buff_cap = buff_len + (buff_cap - buff_len) + GETFILE_BUF_SIZE;
             temp = (char*)realloc(buff, sizeof(char)*buff_cap);
-            if (temp == NULL) {
-				fprintf(stderr, "getfile(%s) error: Out of (realloc) memory.", filename);
-				free(buff);
-                return NULL;
-            }
+            error_goto_if(temp == NULL, "getfile(%s): Out of (realloc) memory.", filename);
 			buff = temp;
         }
     }
 
-    // Try to close until it closes or we give up
-    int close_attempts = 10;
-    while (fclose(f) != 0 && close_attempts > 0) {
-        --close_attempts;
-    };
-    if (close_attempts <= 0) {
-        fprintf(stderr, "getfile(%s) error: Cannot close. Proceeding obliviously.\n", filename);
-    }
-
+    warn_if(fclose(f), "getfile(%s): cannot close.\n", filename);
     return buff;
+
+error:
+    if (buff) { free(buff); }
+    if (f) { warn_if(fclose(f), "getfile(%s): cannot close.\n", filename); }
+    return NULL;
 }

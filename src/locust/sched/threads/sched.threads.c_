@@ -1,0 +1,258 @@
+#ifndef THREADS_H
+#include <locust/sched.threads.h>
+#endif
+
+TYPE_ID_DEF(thread);
+
+META_FIELDS_DEF(thread) = {
+	4, {
+        {TYPE_ID_OF(uint64), sizeof(uint64), "id"},
+        {TYPE_ID_OF(uint64), sizeof(uint64), "thread_id"},
+		{TYPE_ID_OF(ptr), sizeof(task*), "curr_task"},
+		{TYPE_ID_OF(ptr), sizeof(context*), "scheduler_context"},
+        {TYPE_ID_OF(ptr), sizeof(deque*), "tasks"},
+    }
+};
+
+META_DEF(thread, & META_FIELDS_OF(thread), nil);
+
+#ifndef MEM_H
+#include <locust/rt.mem.h>
+#endif
+
+#ifndef ACTORS_H
+#include <locust/sched.actors.h>
+#endif
+
+#ifndef INSPECT_H
+#include <locust/rt.inspect.h>
+#endif
+
+#ifndef WAITS_H
+#include <locust/sched.waits.h>
+#endif
+
+#ifndef ASSERT_H
+#include <locust/rt.assert.h>
+#endif
+
+#ifndef MAP_H
+#include <locust/ds.map.h>
+#endif
+
+#include <stdio.h>
+#include <errno.h>
+#ifdef __TARGET_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+#else
+#include <pthread.h>
+#endif
+
+bool __threads_ready = false;
+thread *__threads;
+uint64 __threads_count = 1;
+map __threadptrmap_by_thread_id;
+
+static ptr thread_scheduler(ptr arg);
+
+void threads_init(uint64 thread_count) {
+    if (thread_count < 1) {
+        thread_count = 1;
+    }
+#ifndef __TARGET_WINDOWS
+    if (thread_count > PTHREAD_THREADS_MAX) {
+        thread_count = PTHREAD_THREADS_MAX;
+    }
+#endif
+
+	__threads_count = thread_count;
+#ifdef __TARGET_WINDOWS
+	__threads = mem_get((sizeof(thread)+sizeof(DWORD))*thread_count);
+#else
+    __threads = mem_get((sizeof(thread)+sizeof(pthread_t))*thread_count);
+#endif
+    if (__threads == nil) {
+        die("Error initializing memory for threads.\n");
+    }
+
+    deque *tasks_deques = mem_get(& META_OF(deque), thread_count);
+    if (tasks_deques == nil) {
+        die("Error initializing tasks deques for threads.\n");
+    }
+
+    // setup lookup map for thread_id to thread obj
+	map_init(&__threadptrmap_by_thread_id, & META_OF(ptr), thread_count);
+
+    // Setup threads
+    thread *t = __threads;
+    deque *d = tasks_deques;
+	for (uint64 i=0; i<thread_count; ++i, ++t, ++d) {
+	    t->id = i;
+		// __threads[i].thread_id is initialized below with thrd_create()
+		t->curr_task = nil;
+		t->sched_ctx = nil; // This is set up later, inside the thread scheduler.
+		t->tasks = d;
+        deque_init(d, & META_OF(ptr));
+    }
+
+	// thread 0 is special base thread. Make sure it gets thread identifier since it won't in threads_launch
+#ifdef __TARGET_WINDOWS
+	DWORD t_id = GetCurrentThreadId();
+	mem_copy(&t_id, &__threads->thread_id, sizeof(DWORD));
+	t = __threads;
+	uint32 hash = map_hash(&t_id, sizeof(DWORD));
+#else
+	pthread_t t_id = pthread_self();
+	mem_copy(&t_id, &__threads->thread_id, sizeof(pthread_t));
+	t = __threads;
+	uint32 hash = map_hash(&t_id, sizeof(pthread_t));
+#endif
+    bool success = map_set(&__threadptrmap_by_thread_id, hash, & META_OF(ptr), &t);
+    printf("Added thread to map: %d to %p", hash, t);
+    assert(success);
+
+	__threads_ready = true;
+    return;
+}
+
+void threads_deinit(void) {
+	mem_free(__threads);
+	__threads = NULL;
+	__threads_count = 0;
+	return;
+}
+
+void threads_launch(void) {
+	assert(__threads_ready);
+
+	printf("launching %ld threads\n", __threads_count);
+    fflush(stdout);
+
+	// Launch thread
+	thread *t = __threads;
+	++t;
+	uint32 hash;
+	bool success;
+
+#ifdef __TARGET_WINDOWS
+	HANDLE err;
+	for (uint64 i=1; i<__threads_count; ++i, ++t) {
+		err = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&thread_scheduler, t, 0, (LPDWORD)&t->thread_id);
+		if (err == NULL) {
+			die("Unknown error with CreateThread() ... Write error detection, AndrewBC.");
+		}
+		hash = map_hash(&t->thread_id, sizeof(DWORD));
+#else
+	int err;
+	for (uint64 i=1; i<__threads_count; ++i, ++t) {
+        err = pthread_create((pthread_t*)&t->thread_id, NULL, &thread_scheduler, t);
+        if (err != 0) {
+            fprintf(stderr, "Error spawning thread %lu.\n", i);
+            switch(err) {
+                case EAGAIN:
+                    die("Not enough memory.\n");
+                case EINVAL:
+                    die("Value of attr in pthread_create invalid.\n");
+                case EPERM:
+                    die("Permissions failure.\n");
+                default:
+                    die("Unknown error.\n");
+            }
+        }
+		hash = map_hash(&t->thread_id, sizeof(pthread_t));
+#endif
+        success = map_set(&__threadptrmap_by_thread_id, hash, & META_OF(ptr), &t);
+        printf("Added thread to map: %d to %p", hash, t);
+        assert(success);
+    }
+
+	printf("launching main thread\n");
+    fflush(stdout);
+
+	// Now launch as main thread
+	thread_scheduler(&__threads[0]);
+}
+
+thread* threads_curr(void) {
+	assert(__threads_ready);
+	thread *t;
+
+#ifdef __TARGET_WINDOWS
+	DWORD thread_id = GetCurrentThreadId();
+	uint32 hash = map_hash(&thread_id, sizeof(DWORD));
+#else
+	pthread_t thread_id = pthread_self();
+	uint32 hash = map_hash(&thread_id, sizeof(pthread_t));
+#endif
+
+    printf("threads_curr 0.5, hash=%d\n", hash);
+    fflush(stdout);
+
+    bool success = map_get(&__threadptrmap_by_thread_id, hash, & META_OF(ptr), &t);
+
+    printf("threads_curr 1\n");
+    fflush(stdout);
+
+    assert(success);
+
+    printf("threads_curr 2: success=%d, t=%p\n", success, t);
+    fflush(stdout);
+
+	return t;
+}
+
+
+static ptr thread_scheduler(ptr arg) {
+    // Inspired by code from http://www.1024cores.net/home/scalable-architecture/task-scheduling-strategies
+    thread *thr = (thread *)arg;
+	thread *thief = &__threads[(thr->id != 0) ? thr->id-1 : __threads_count];
+	thread *victim = &__threads[(thr->id+1)%__threads_count];
+	task *tsk;
+	context ctx;
+	context *old_ctx;
+	context *tsk_ctx;
+	thr->sched_ctx = &ctx;
+    uint64 backoff_rate = 0;
+
+	printf("inside thread %lu\n", thr->id);
+    fflush(stdout);
+
+	while (true) {
+		printf("thread %lu getting task\n", thr->id);
+		fflush(stdout);
+		if (deque_front_pop(thr->tasks, & META_OF(ptr), &tsk) || deque_front_pop(victim->tasks, & META_OF(ptr), &tsk)) {
+		    repr(&tsk, & META_OF(task));
+			printf("\nthread %lu got task: %ld named \"%s\" -- %ld and %ld tasks in deques\n", thr->id, tsk->id, tsk->name, thr->tasks->len, victim->tasks->len);
+
+			fflush(stdout);
+			task_set_ready_off(tsk);
+			thr->curr_task = tsk;
+
+			printf("thread %lu context_swap\n", thr->id);
+			fflush(stdout);
+
+			tsk_ctx = &tsk->ctx;
+			old_ctx = &ctx;
+
+			context_swap(old_ctx, tsk_ctx);
+			printf("thread %lu context_swap done!\n", thr->id);
+			fflush(stdout);
+
+			thr->curr_task = nil;
+			//if (task_is_exiting(&tsk) && !task_is_daemon(&tsk)) {
+			//	task_deinit(&tsk);
+			//}
+
+            backoff_rate = 0;
+        } else {
+			printf("thread %lu waiting\n", thr->id);
+			fflush(stdout);
+            wait_gradual(backoff_rate++);
+        }
+	}
+	return nil;
+}
+
+

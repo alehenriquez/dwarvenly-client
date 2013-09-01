@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2012 Petri Lehtinen <petri@digip.org>
  *
- * Jansson is free software; you can redistribute it and/or modify
+ * JSON is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
  *
  *
@@ -15,8 +15,8 @@
  * by hand.
  */
 
-#ifndef JANSSON_CONFIG_H
-#define JANSSON_CONFIG_H
+#ifndef JSON_CONFIG_H
+#define JSON_CONFIG_H
 
 /* If your compiler supports the inline keyword in C, JSON_INLINE is
    defined to `inline', otherwise empty. In C++, the inline is always

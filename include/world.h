@@ -2,19 +2,23 @@
 
 #include <stdint.h>
 
+#ifndef TYPES_H
+#include <locust/type.types.h>
+#endif
+
+#ifndef MAP_H
+#include <locust/ds.map.h>
+#endif
+
 typedef struct world_tile_{
-	uint64_t x;
-	uint64_t y;
-	unsigned char *tiles;
-	struct world_tile_ *n;
-	struct world_tile_ *e;
-	struct world_tile_ *s;
-	struct world_tile_ *w;
+	struct world_tile_ *neighbors[8]; // 0 = N, clockwise.
+	int64 x, y, z;
+
+	unsigned char tiles[];
 } world_tile;
 
 typedef struct {
-	uint64_t tiles_len;
-	world_tile *tiles;
+	map *tiles;
 } world;
 
 extern world the_world;

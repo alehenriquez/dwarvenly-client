@@ -1,0 +1,70 @@
+#ifndef CONTEXT_H
+#include <locust/sched.context.h>
+#endif
+
+TYPE_ID_DEF(context);
+
+META_FIELDS_DEF(context) = {
+    6, {
+        {TYPE_ID_OF(ptr), sizeof(uint64*), "rsp"},
+        {TYPE_ID_OF(uint64), sizeof(uint64), "func"},
+        {TYPE_ID_OF(uint64), sizeof(uint64), "arg"},
+        {TYPE_ID_OF(ptr), sizeof(ptr), "stack"},
+        {TYPE_ID_OF(uint64), sizeof(uint64), "stack_len"},
+        {TYPE_ID_OF(ptr), sizeof(context*), "next"},
+    }
+};
+
+META_DEF(context, & META_FIELDS_OF(context), nil);
+
+#ifndef MEM_H
+#include <locust/rt.mem.h>
+#endif
+
+#ifndef ASSERT_H
+#include <locust/rt.assert.h>
+#endif
+
+#include <stdio.h>
+
+/*
+ * Copyright (c) 2005 Russ Cox, MIT; see LIBTASK_COPYRIGHT
+ * Altered by AndrewBC - 2012
+ */
+
+void context_init(context *self, uint64 stack_len, ptr stack_ptr, void (*func)(), ptr arg) {
+    assert(self != nil);
+    assert(stack_ptr != nil);
+    assert(func != nil);
+
+    printf("context_make: arg: %p\n", arg);
+	self->func = (uintptr_t)func;
+    self->arg = (uint64)arg;
+	printf("context_make: arg again: %ld\n", self->arg);
+
+
+    self->stack_len = stack_len;
+
+	// stack grows down, so rsp must be on opposite side.
+	self->stack = ((byte*)stack_ptr)+stack_len;
+
+	// Also make room for the "pushq (uint64)func" and registers that has to be faked
+	// so the first ret of the first call pops it off correctly
+	self->rsp = (uint64*)self->stack;
+
+	// Now we set up the return address fakery and registers
+	*--self->rsp = 0x0; // bogus last rip?
+	*--self->rsp = 0xDEADBEEF; // rbx
+	*--self->rsp = 0xDEADBEEF; // r12
+	*--self->rsp = 0xDEADBEEF; // r13
+	*--self->rsp = 0xDEADBEEF; // r14
+	*--self->rsp = 0xDEADBEEF; // r15
+	*--self->rsp = 0xDEADBEEF; // rbp
+
+	return;
+}
+
+void context_deinit(context *self) {
+    assert(self != nil);
+
+}

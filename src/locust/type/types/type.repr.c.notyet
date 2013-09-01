@@ -1,0 +1,29 @@
+#ifndef TYPES_H
+#include <locust/type.types.h>
+#endif
+
+#include <stdio.h>
+
+/*
+static inline void repr__basics(ptr item, const meta *m) {
+	
+}
+
+
+void repr(ptr item, const meta *m) {
+    printf("<%s:s=%lld:t=%d", m->name, m->size, m->type);
+
+
+    if (m->fields != nil) {
+        uint16 fields_count = m->fields->len;
+        const field_info * f = &m->fields->fields[0];
+		byte *p = item;
+        for (uint16 i = 0; i < fields_count; ++i, ++f) {
+			
+            printf(" %s:s=%zd:t=%d", f->name, f->size, f->type);
+			p += f->size;
+        }
+    }
+    printf(">");
+}
+*/
